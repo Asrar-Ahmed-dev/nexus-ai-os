@@ -1,3 +1,5 @@
+from database.database import SessionLocal
+from database.models import ChatMessage
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -56,3 +58,24 @@ User:
     return {
         "reply": reply
     }
+@router.get("/{chat_id}/messages")
+def get_messages(chat_id: int):
+
+    db = SessionLocal()
+
+    messages = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.chat_id == chat_id)
+        .order_by(ChatMessage.id.asc())
+        .all()
+    )
+
+    db.close()
+
+    return [
+        {
+            "role": msg.role,
+            "content": msg.content,
+        }
+        for msg in messages
+    ]

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
+import { getMessages } from "../../services/api";
 import ChatBubble from "./ChatBubble";
 import PromptBox from "./PromptBox";
 import TypingIndicator from "./TypingIndicator";
@@ -13,11 +13,31 @@ type Message = {
   content: string;
 };
 
-export default function ChatWindow() {
+type ChatWindowProps = {
+  selectedChat: number;
+};
+
+export default function ChatWindow({
+  selectedChat,
+}: ChatWindowProps) {
+  console.log("Current Chat:",selectedChat);
   const [messages, setMessages] = useState<Message[]>([]);
   const [thinking, setThinking] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+
+  async function loadMessages() {
+
+    const data = await getMessages(selectedChat);
+
+    setMessages(data);
+
+  }
+
+  loadMessages();
+
+}, [selectedChat]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -39,7 +59,7 @@ export default function ChatWindow() {
     setThinking(true);
 
     try {
-      const response = await sendMessage(1,message);
+      const response = await sendMessage(selectedChat,message);
 
       setThinking(false);
 

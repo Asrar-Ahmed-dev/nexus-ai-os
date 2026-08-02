@@ -21,3 +21,27 @@ export async function sendMessage(
 
   return await response.json();
 }
+export async function createChat() {
+  const response = await fetch(`${API_URL}/chats/`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create chat");
+  }
+
+  return await response.json();
+}
+export async function getMessages(chat_id: number) {
+
+  const response = await fetch(
+    `${API_URL}/chat/${chat_id}/messages`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to load messages");
+  }
+
+  return await response.json();
+
+}
