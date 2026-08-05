@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { createChat } from "../../services/api";
+import { useEffect, useState } from "react";
+
+import {
+  createChat,
+  getChats,
+  deleteChat,
+} from "../../services/api";
+
+type Chat = {
+  id: number;
+  title: string;
+};
 
 type ChatSidebarProps = {
   selectedChat: number;
@@ -12,68 +22,105 @@ export default function ChatSidebar({
   selectedChat,
   setSelectedChat,
 }: ChatSidebarProps) {
-  const [chats, setChats] = useState([
-    {
-      id: 1,
-      title: "New Chat",
-    },
-  ]);
+  const [chats, setChats] = useState<Chat[]>([]);
 
-  
+  useEffect(() => {
+    loadChats();
+  }, []);
+
+  async function loadChats() {
+    try {
+      const data = await getChats();
+
+      setChats(data);
+
+      if (data.length > 0 && selectedChat === 1) {
+        setSelectedChat(data[0].id);
+      }
+    } catch (err) {
+      console.error("Failed to load chats", err);
+    }
+  }
 
   const handleNewChat = async () => {
     const chat = await createChat();
 
-    setChats([...chats, chat]);
+    await loadChats();
+
     setSelectedChat(chat.id);
   };
+  async function handleDeleteChat( chatId: number) {
+    try {
+      await deleteChat(chatId);
 
+      await loadChats();
+
+      if (selectedChat === chatId) {
+        const remaining = chats.filter(
+          (chat) => chat.id !== chatId
+        );
+
+        if (remaining.length > 0) {
+          setSelectedChat(remaining[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete chat", err);
+    }
+  }
   return (
-    <div className="w-72 border-r border-white/10 bg-[#111118] flex flex-col">
+  <div className="w-72 border-r border-white/10 bg-[#111118] flex flex-col">
+    {/* Header */}
+    <div className="p-5 border-b border-white/10">
+      <button
+        onClick={handleNewChat}
+        className="
+          w-full
+          rounded-xl
+          bg-indigo-600
+          py-3
+          font-medium
+          hover:bg-indigo-500
+          transition
+        "
+      >
+        + New Chat
+      </button>
+    </div>
 
-      {/* Header */}
-      <div className="p-5 border-b border-white/10">
-        <button
-          onClick={handleNewChat}
-          className="
-            w-full
+    {/* Chat List */}
+    <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      {chats.map((chat) => (
+        <div
+          key={chat.id}
+          className={`
+            flex
+            items-center
             rounded-xl
-            bg-indigo-600
-            py-3
-            font-medium
-            hover:bg-indigo-500
-            transition
-          "
+            ${
+              selectedChat === chat.id
+                ? "bg-indigo-600"
+                : "bg-white/10 hover:bg-white/20"
+            }
+          `}
         >
-          + New Chat
-        </button>
-      </div>
-
-      {/* Chat List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {chats.map((chat) => (
           <button
-            key={chat.id}
             onClick={() => setSelectedChat(chat.id)}
-            className={`
-              w-full
-              rounded-xl
-              px-4
-              py-3
-              text-left
-              transition
-              ${
-                selectedChat === chat.id
-                  ? "bg-indigo-600"
-                  : "bg-white/10 hover:bg-white/20"
-              }
-            `}
+            className="flex-1 px-4 py-3 text-left rounded-l-xl"
           >
             {chat.title}
           </button>
-        ))}
-      </div>
 
+          <button
+            onClick={() => handleDeleteChat(chat.id)}
+            className="px-3 text-red-400 hover:text-red-300"
+            title="Delete chat"
+          >
+            🗑
+          </button>
+        </div>
+      ))}
     </div>
-  );
+  </div>
+);
 }
