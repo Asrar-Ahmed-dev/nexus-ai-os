@@ -106,7 +106,21 @@ User:
 {request.message}
 """
 
+    def generate():
+
+        full_reply = ""
+
+        for chunk in ask_gemini_stream(prompt):
+            full_reply += chunk
+            yield chunk
+
+        save_message(
+            request.chat_id,
+            "assistant",
+            full_reply,
+        )
+
     return StreamingResponse(
-        ask_gemini_stream(prompt),
-        media_type="text/plain",
-    )
+    generate(),
+    media_type="text/plain",
+)
