@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   getMessages,
-  sendMessage,
+  streamMessage,
   renameChat,
 } from "../../services/api";
 
@@ -59,6 +59,7 @@ export default function ChatWindow({
   }, [messages, thinking]);
 
   async function handleSend(message: string) {
+    console.log("handleSend started");
     if (!message.trim()) return;
 
     const userMessage: Message = {
@@ -72,10 +73,32 @@ export default function ChatWindow({
     setThinking(true);
 
     try {
-      const response = await sendMessage(
+      let streamedReply = "";
+
+      setMessages([
+        ...updated,
+        {
+          role: "assistant",
+          content: "",
+        },
+      ]);
+      console.log("Calling streamMessage...");
+      await streamMessage(
         selectedChat,
-        message
+        message,
+        (chunk) => {
+          streamedReply += chunk;
+
+          setMessages([
+            ...updated,
+            {
+             role: "assistant",
+             content: streamedReply,
+            },
+          ]);
+        }
       );
+      setThinking(false);
 
       // Rename brand new chats
       if (messages.length === 0) {
@@ -96,17 +119,10 @@ export default function ChatWindow({
 
         setChats(updatedChats);
       }
-
-      setThinking(false);
-
-      setMessages([
-        ...updated,
-        {
-          role: "assistant",
-          content: response.reply,
-        },
-      ]);
-    } catch {
+      
+    } catch(err) {
+      console.error("HANDLE SEND ERROR:",err);
+      console.error(err);
       setThinking(false);
 
       setMessages([

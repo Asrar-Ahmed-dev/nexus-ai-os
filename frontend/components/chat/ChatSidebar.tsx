@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import React from "react";
 import {
   createChat,
   getChats,
@@ -16,17 +15,16 @@ type Chat = {
 type ChatSidebarProps = {
   selectedChat: number;
   setSelectedChat: (id: number) => void;
+  chats: Chat[];
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
 };
 
 export default function ChatSidebar({
   selectedChat,
   setSelectedChat,
+  chats,
+  setChats,
 }: ChatSidebarProps) {
-  const [chats, setChats] = useState<Chat[]>([]);
-
-  useEffect(() => {
-    loadChats();
-  }, []);
 
   async function loadChats() {
     try {

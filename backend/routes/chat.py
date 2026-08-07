@@ -1,9 +1,13 @@
 from database.database import SessionLocal
 from database.models import ChatMessage
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from services.ai_service import ask_gemini
+from services.ai_service import (
+    ask_gemini,
+    ask_gemini_stream,
+)
 from services.memory import save_message, get_recent_messages
 
 router = APIRouter()
@@ -79,3 +83,30 @@ def get_messages(chat_id: int):
         }
         for msg in messages
     ]
+@router.post("/stream")
+async def stream_chat(request: ChatRequest):
+
+    history = get_recent_messages(request.chat_id)
+
+    conversation = ""
+
+    for msg in history:
+        conversation += f"{msg.role}: {msg.content}\n"
+
+    prompt = f"""
+You are Nexus AI.
+
+This is the previous conversation:
+
+{conversation}
+
+Now answer the user's latest message naturally.
+
+User:
+{request.message}
+"""
+
+    return StreamingResponse(
+        ask_gemini_stream(prompt),
+        media_type="text/plain",
+    )
