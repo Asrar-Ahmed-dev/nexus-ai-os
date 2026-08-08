@@ -95,7 +95,8 @@ export async function streamMessage(
   chatId: number,
   message: string,
   onChunk: (chunk: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  filename?: string
 ) {
   const response = await fetch(
     "http://127.0.0.1:8000/chat/stream",
@@ -107,6 +108,7 @@ export async function streamMessage(
       body: JSON.stringify({
         chat_id: chatId,
         message,
+        filename: filename || null,
       }),
       signal,
     }
@@ -125,4 +127,23 @@ export async function streamMessage(
     const text = decoder.decode(value);
     onChunk(text);
   }
+}
+export async function uploadFile(file: File) {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  const response = await fetch(
+    `${API_URL}/files/upload`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  return await response.json();
 }

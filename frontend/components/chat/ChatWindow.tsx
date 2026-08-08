@@ -65,7 +65,7 @@ export default function ChatWindow({
     setThinking(false);
   }
 
-  async function handleSend(message: string) {
+  async function handleSend(message: string, filename?:string) {
     console.log("handleSend started");
     if (!message.trim()) return;
     const controller = new AbortController();
@@ -106,7 +106,8 @@ export default function ChatWindow({
             },
           ]);
         },
-        controller.signal
+        controller.signal,
+        filename
       );
       abortControllerRef.current = null
       setThinking(false);
