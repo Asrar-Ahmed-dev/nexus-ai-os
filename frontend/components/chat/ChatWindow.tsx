@@ -35,6 +35,7 @@ export default function ChatWindow({
   const [thinking, setThinking] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Load chat whenever selected chat changes
   useEffect(() => {
@@ -58,9 +59,17 @@ export default function ChatWindow({
     });
   }, [messages, thinking]);
 
+  function handleStop() {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setThinking(false);
+  }
+
   async function handleSend(message: string) {
     console.log("handleSend started");
     if (!message.trim()) return;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const userMessage: Message = {
       role: "user",
@@ -96,8 +105,10 @@ export default function ChatWindow({
              content: streamedReply,
             },
           ]);
-        }
+        },
+        controller.signal
       );
+      abortControllerRef.current = null
       setThinking(false);
 
       // Rename brand new chats
@@ -121,7 +132,11 @@ export default function ChatWindow({
       }
       
     } catch(err) {
-      console.error("HANDLE SEND ERROR:",err);
+      if ((err as Error).name === "AbortError") {
+        console.log("Generation stopped by user.");
+        setThinking(false);
+        return;
+      }
       console.error(err);
       setThinking(false);
 
@@ -129,8 +144,7 @@ export default function ChatWindow({
         ...updated,
         {
           role: "assistant",
-          content:
-            "❌ Unable to contact Nexus AI.",
+          content: "❌ Unable to contact Nexus AI.",
         },
       ]);
     }
@@ -158,7 +172,11 @@ export default function ChatWindow({
         <div ref={bottomRef} />
       </div>
 
-      <PromptBox onSend={handleSend} />
+      <PromptBox
+        onSend={handleSend}
+        onStop={handleStop}
+        thinking={thinking}
+     />
     </div>
   );
 }

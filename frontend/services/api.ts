@@ -94,7 +94,8 @@ export async function deleteChat(chat_id: number) {
 export async function streamMessage(
   chatId: number,
   message: string,
-  onChunk: (chunk: string) => void
+  onChunk: (chunk: string) => void,
+  signal?: AbortSignal
 ) {
   const response = await fetch(
     "http://127.0.0.1:8000/chat/stream",
@@ -107,27 +108,21 @@ export async function streamMessage(
         chat_id: chatId,
         message,
       }),
+      signal,
     }
   );
-
-  console.log("Status:", response.status);
-
   if (!response.ok) {
     throw new Error(await response.text());
   }
-  const reader = response.body?.getReader()
-  if(!reader) {
+  const reader = response.body?.getReader();
+  if (!reader){
     throw new Error("No response body");
   }
-  const decoder = new TextDecoder();
-
+  const decoder =new TextDecoder();
   while (true) {
     const { done, value } = await reader.read();
-
     if (done) break;
     const text = decoder.decode(value);
-    console.log("Chunk:", text);
-
     onChunk(text);
   }
 }
