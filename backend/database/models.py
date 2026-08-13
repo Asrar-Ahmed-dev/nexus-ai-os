@@ -6,6 +6,43 @@ from database.database import Base
 
 
 # ==========================
+# Users
+# ==========================
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    email = Column(
+        String,
+        unique=True,
+        nullable=False,
+        index=True
+    )
+
+    username = Column(
+        String,
+        unique=True,
+        nullable=False
+    )
+
+    password_hash = Column(
+        String,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+
+# ==========================
 # Chat Sessions
 # ==========================
 
@@ -54,4 +91,38 @@ class ChatMessage(Base):
     session = relationship(
         "ChatSession",
         back_populates="messages"
+    )
+# ==========================
+# Long-Term Memory
+# ==========================
+
+class Memory(Base):
+    __tablename__ = "memories"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        nullable=False,
+        default=1
+    )
+
+    content = Column(
+        String,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
     )

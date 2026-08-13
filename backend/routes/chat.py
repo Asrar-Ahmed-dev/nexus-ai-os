@@ -16,6 +16,7 @@ from services.memory import (
     save_message,
     get_recent_messages,
 )
+from services.memory_service import get_memories
 
 from routes.files import extract_text
 
@@ -47,6 +48,12 @@ async def chat(request: ChatRequest):
     for msg in history:
         conversation += f"{msg.role}: {msg.content}\n"
 
+        # Get long-term memories
+        memories = get_memories(user_id=1)
+        memory_context = ""
+        for memory in memories:
+            memory_context += f"- {memory.content}\n"
+
     # Read attached file if provided
     file_context = ""
 
@@ -64,6 +71,10 @@ async def chat(request: ChatRequest):
 
     prompt = f"""
 You are Nexus AI.
+
+These are things you remember about the user:
+
+{memory_context}
 
 This is the previous conversation:
 
@@ -145,6 +156,12 @@ async def stream_chat(request: ChatRequest):
 
     for msg in history:
         conversation += f"{msg.role}: {msg.content}\n"
+        # Get long-term memories
+        memories = get_memories(user_id=1)
+        memory_context = ""
+
+        for memory in memories:      
+            memory_context += f"- {memory.content}\n"
 
     # Read attached file if provided
     file_context = ""
@@ -163,6 +180,8 @@ async def stream_chat(request: ChatRequest):
 
     prompt = f"""
 You are Nexus AI
+These are things you remember about the user:
+{memory_context}
 This is the previous conversation:
 {conversation}
 """

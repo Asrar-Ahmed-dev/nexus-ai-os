@@ -6,6 +6,8 @@ from database.models import Base
 from routes.chat import router as chat_router
 from routes.chats import router as chats_router
 from routes.files import router as files_router
+from routes.memory import router as memory_router
+from routes.auth import router as auth_router
 
 app = FastAPI()
 # Create all database tables
@@ -22,6 +24,8 @@ app.add_middleware(
 app.include_router(chat_router, prefix="/chat")
 app.include_router(chats_router, prefix="/chats")
 app.include_router(files_router)
+app.include_router(memory_router)
+app.include_router(auth_router)
 
 
 @app.get("/")
