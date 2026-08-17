@@ -1,9 +1,9 @@
 import os
 
 from database.database import SessionLocal
-from database.models import ChatMessage
+from database.models import ChatMessage, ChatSession
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -16,7 +16,10 @@ from services.memory import (
     save_message,
     get_recent_messages,
 )
+
 from services.memory_service import get_memories
+
+from services.jwt_service import get_current_user
 
 from routes.files import extract_text
 
@@ -30,29 +33,83 @@ class ChatRequest(BaseModel):
     filename: str | None = None
 
 
+def verify_chat_ownership(
+    chat_id: int,
+    user_id: int,
+):
+    db = SessionLocal()
+
+    chat = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == chat_id,
+            ChatSession.user_id == user_id,
+        )
+        .first()
+    )
+
+    db.close()
+
+    if chat is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat not found",
+        )
+
+    return chat
+
+
 @router.post("/")
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    current_user=Depends(get_current_user),
+):
+
+    # Verify that this chat belongs to the logged-in user
+    verify_chat_ownership(
+        request.chat_id,
+        current_user.id,
+    )
 
     # Save user's message
-    save_message(
+    saved = save_message(
         request.chat_id,
         "user",
         request.message,
+        current_user.id,
     )
 
+    if not saved:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat not found",
+        )
+
     # Get previous conversation
-    history = get_recent_messages(request.chat_id)
+    history = get_recent_messages(
+        request.chat_id,
+        current_user.id,
+    )
 
     conversation = ""
 
-    for msg in history:
-        conversation += f"{msg.role}: {msg.content}\n"
+    if history:
+        for msg in history:
+            conversation += (
+                f"{msg.role}: {msg.content}\n"
+            )
 
-        # Get long-term memories
-        memories = get_memories(user_id=1)
-        memory_context = ""
-        for memory in memories:
-            memory_context += f"- {memory.content}\n"
+    # Get long-term memories
+    memories = get_memories(
+        user_id=current_user.id
+    )
+
+    memory_context = ""
+
+    for memory in memories:
+        memory_context += (
+            f"- {memory.content}\n"
+        )
 
     # Read attached file if provided
     file_context = ""
@@ -79,7 +136,6 @@ These are things you remember about the user:
 This is the previous conversation:
 
 {conversation}
-
 """
 
     if file_context:
@@ -109,6 +165,7 @@ User:
         request.chat_id,
         "assistant",
         reply,
+        current_user.id,
     )
 
     return {
@@ -117,13 +174,24 @@ User:
 
 
 @router.get("/{chat_id}/messages")
-def get_messages(chat_id: int):
+def get_messages(
+    chat_id: int,
+    current_user=Depends(get_current_user),
+):
+
+    # Verify ownership
+    verify_chat_ownership(
+        chat_id,
+        current_user.id,
+    )
 
     db = SessionLocal()
 
     messages = (
         db.query(ChatMessage)
-        .filter(ChatMessage.chat_id == chat_id)
+        .filter(
+            ChatMessage.chat_id == chat_id
+        )
         .order_by(ChatMessage.id.asc())
         .all()
     )
@@ -140,28 +208,56 @@ def get_messages(chat_id: int):
 
 
 @router.post("/stream")
-async def stream_chat(request: ChatRequest):
+async def stream_chat(
+    request: ChatRequest,
+    current_user=Depends(get_current_user),
+):
+
+    # Verify that this chat belongs to the logged-in user
+    verify_chat_ownership(
+        request.chat_id,
+        current_user.id,
+    )
 
     # Save user's message
-    save_message(
+    saved = save_message(
         request.chat_id,
         "user",
         request.message,
+        current_user.id,
     )
 
+    if not saved:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat not found",
+        )
+
     # Get previous conversation
-    history = get_recent_messages(request.chat_id)
+    history = get_recent_messages(
+        request.chat_id,
+        current_user.id,
+    )
 
     conversation = ""
 
-    for msg in history:
-        conversation += f"{msg.role}: {msg.content}\n"
-        # Get long-term memories
-        memories = get_memories(user_id=1)
-        memory_context = ""
+    if history:
+        for msg in history:
+            conversation += (
+                f"{msg.role}: {msg.content}\n"
+            )
 
-        for memory in memories:      
-            memory_context += f"- {memory.content}\n"
+    # Get long-term memories
+    memories = get_memories(
+        user_id=current_user.id
+    )
+
+    memory_context = ""
+
+    for memory in memories:
+        memory_context += (
+            f"- {memory.content}\n"
+        )
 
     # Read attached file if provided
     file_context = ""
@@ -179,27 +275,38 @@ async def stream_chat(request: ChatRequest):
             )
 
     prompt = f"""
-You are Nexus AI
+You are Nexus AI.
+
 These are things you remember about the user:
+
 {memory_context}
+
 This is the previous conversation:
+
 {conversation}
 """
+
     if file_context:
         prompt += f"""
 The user has attached a file.
+
 Filename:
 {request.filename}
+
 File contents:
 {file_context}
+
 Use the file contents when answering the user's question.
 If the question is about the file, base your answer on its contents.
 """
-        prompt += f"""
+
+    prompt += f"""
 Now answer the user's latest message naturally.
+
 User:
 {request.message}
 """
+
     def generate():
 
         full_reply = ""
@@ -213,6 +320,7 @@ User:
             request.chat_id,
             "assistant",
             full_reply,
+            current_user.id,
         )
 
     return StreamingResponse(

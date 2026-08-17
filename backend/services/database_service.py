@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from database.models import ChatMessage, ChatSession
 
 
+# ==========================
+# Messages
+# ==========================
+
 def save_message(
     db: Session,
     chat_id: int,
@@ -21,23 +25,42 @@ def save_message(
 
     return message
 
-def create_chat(db: Session):
 
-    chat = ChatSession()
+# ==========================
+# Create Chat
+# ==========================
+
+def create_chat(
+    db: Session,
+    user_id: int,
+):
+    chat = ChatSession(
+        user_id=user_id
+    )
 
     db.add(chat)
     db.commit()
     db.refresh(chat)
 
     return chat
+
+
+# ==========================
+# Rename Chat
+# ==========================
+
 def update_chat_title(
     db: Session,
     chat_id: int,
     title: str,
+    user_id: int,
 ):
     chat = (
         db.query(ChatSession)
-        .filter(ChatSession.id == chat_id)
+        .filter(
+            ChatSession.id == chat_id,
+            ChatSession.user_id == user_id,
+        )
         .first()
     )
 
@@ -50,19 +73,43 @@ def update_chat_title(
     db.refresh(chat)
 
     return chat
-def get_all_chats(db: Session):
+
+
+# ==========================
+# Get User's Chats
+# ==========================
+
+def get_all_chats(
+    db: Session,
+    user_id: int,
+):
     return (
         db.query(ChatSession)
-        .order_by(ChatSession.created_at.desc())
+        .filter(
+            ChatSession.user_id == user_id
+        )
+        .order_by(
+            ChatSession.created_at.desc()
+        )
         .all()
     )
+
+
+# ==========================
+# Delete Chat
+# ==========================
+
 def delete_chat(
     db: Session,
     chat_id: int,
+    user_id: int,
 ):
     chat = (
         db.query(ChatSession)
-        .filter(ChatSession.id == chat_id)
+        .filter(
+            ChatSession.id == chat_id,
+            ChatSession.user_id == user_id,
+        )
         .first()
     )
 
