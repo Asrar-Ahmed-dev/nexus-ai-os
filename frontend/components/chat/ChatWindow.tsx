@@ -36,15 +36,21 @@ export default function ChatWindow({
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const skipNextScrollRef = useRef(false);
 
   // Load chat whenever selected chat changes
   useEffect(() => {
     async function loadMessages() {
       try {
         const data = await getMessages(selectedChat);
+        // Prevent auto-scroll when loading an existing chat
+        skipNextScrollRef.current = true;
+
         setMessages(data);
       } catch (err) {
         console.error(err);
+
+        skipNextScrollRef.current = true;
         setMessages([]);
       }
     }
@@ -54,10 +60,14 @@ export default function ChatWindow({
 
   // Auto scroll
   useEffect(() => {
+    if (skipNextScrollRef.current) {
+      skipNextScrollRef.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages, thinking]);
+  }, [messages]);
 
   function handleStop() {
     abortControllerRef.current?.abort();
@@ -152,8 +162,8 @@ export default function ChatWindow({
   }
 
   return (
-    <div className="mt-12 flex h-[650px] flex-col rounded-3xl border border-white/10 bg-[#111118] shadow-[0_0_35px_rgba(0,255,255,0.03)]">
-      <div className="flex-1 overflow-y-auto p-6 space-y-5">
+    <div className="flex h-full min-h-0 flex-col rounded-3xl border border-white/10 bg-[#111118] shadow-[0_0_35px_rgba(0,255,255,0.03)]">
+      <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-5">
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center text-zinc-500 text-lg">
             ✨ Start a conversation with Nexus AI...

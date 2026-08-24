@@ -1,5 +1,7 @@
 "use client";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { removeToken } from "../../lib/auth";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -18,9 +20,29 @@ const menu = [
   { icon: Calendar, title: "Planner", href: "#" },
   { icon: Settings, title: "Settings", href: "#" },
 ];
+type User = {
+  id: number;
+  email: string;
+  username: string;
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+  function handleLogout() {
+    removeToken();
+    localStorage.removeItem("user");
+
+    router.replace("/login");
+  }
   return (
     <aside className="w-72 bg-[#111116] border-r border-zinc-800 flex flex-col justify-between">
 
@@ -80,16 +102,24 @@ export default function Sidebar() {
 
       <div className="p-5">
 
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 flex items-center gap-4">
+        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
+          <div className="flex items-center gap-4">
 
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center font-bold">
-            AA
+            {user?.username
+              ? user.username
+                  .split("")
+                  .map((name) => name[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0,2)
+              : "U"}
           </div>
 
           <div>
 
             <h3 className="text-white">
-              Asrar Ahmed
+              {user?.username || "User"}
             </h3>
 
             <p className="text-green-400 text-sm">
@@ -99,9 +129,17 @@ export default function Sidebar() {
           </div>
 
         </div>
+        <button
+        onClick={handleLogout}
+        className="mt-4 w-full rounded-x1 border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-400 transition hover:bg-red-500/20 hover:text-red-300"
+        >
+          Logout
+        </button>
+      
 
       </div>
+    </div>
 
-    </aside>
+  </aside>
   );
 }

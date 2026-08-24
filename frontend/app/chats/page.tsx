@@ -16,13 +16,13 @@ type Chat = {
 };
 
 export default function ChatsPage() {
-  const [selectedChat, setSelectedChat] = useState(1);
+  const [selectedChat, setSelectedChat] = useState(0);
   const [chats, setChats] = useState<Chat[]>([]);
 
   useEffect(() => {
     async function loadChats() {
       try {
-        const data = await getChats();
+        const data = (await getChats()) as Chat[];
 
         setChats(data);
 
@@ -52,12 +52,14 @@ export default function ChatsPage() {
             setChats={setChats}
           />
 
-          <div className="flex-1 p-8 overflow-hidden">
-            <ChatWindow
-              selectedChat={selectedChat}
-              chats={chats}
-              setChats={setChats}
-            />
+          <div className="min-h-0 flex-1 p-8 overflow-hidden">
+            {selectedChat > 0 && (  
+              <ChatWindow
+                selectedChat={selectedChat}
+                chats={chats}
+                setChats={setChats}
+              />
+            )}
           </div>
         </div>
       </div>
