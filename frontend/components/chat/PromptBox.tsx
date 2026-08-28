@@ -1,21 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { uploadFile } from "../../services/api";
 
 type Props = {
   onSend: (message: string, filename?: string) => void;
   onStop: () => void;
   thinking: boolean;
+  initialMessage?: string;
 };
 
 export default function PromptBox({
   onSend,
   onStop,
   thinking,
+  initialMessage,
 }: Props) {
   const [message, setMessage] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  useEffect(() => {
+    if (initialMessage) {
+      setMessage(initialMessage);
+    }
+  }, [initialMessage]);
 
   const handleSend = () => {
     if ((!message.trim() && !selectedFile) || thinking) return;

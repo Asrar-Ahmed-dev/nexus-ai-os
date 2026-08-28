@@ -24,12 +24,14 @@ type ChatWindowProps = {
   selectedChat: number;
   chats: Chat[];
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
+  mode?: string | null;
 };
 
 export default function ChatWindow({
   selectedChat,
   chats,
   setChats,
+  mode,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [thinking, setThinking] = useState(false);
@@ -160,9 +162,32 @@ export default function ChatWindow({
       ]);
     }
   }
+  
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-3xl border border-white/10 bg-[#111118] shadow-[0_0_35px_rgba(0,255,255,0.03)]">
+      {mode && (
+        <div className="border-b border-white/10 px-6 py-4">
+          <div className="text-sm font-semibold uppercase tracking-widest text-cyan-400">
+            {mode} mode
+          </div>
+
+          <p className="mt-1 text-sm text-zinc-400">
+            {mode === "analyze" &&
+              "Upload a file, paste text, or describe something you want Nexus to analyze."}
+
+            {mode === "code" &&
+              "Paste code or describe what you want Nexus to build, debug, or improve."}
+
+            {mode === "research" &&
+              "Enter a topic and Nexus will help you explore it in detail."}
+
+            {mode === "create" &&
+              "Describe what you want Nexus to create and we'll build it together."}
+          </p>
+        </div>
+      )}
+      
       <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-5">
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center text-zinc-500 text-lg">

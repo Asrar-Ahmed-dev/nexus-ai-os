@@ -16,7 +16,7 @@ const menu = [
   { icon: LayoutDashboard, title: "Dashboard", href:"/" },
   { icon: MessageCircle, title: "Chats", href: "/chats" },
   { icon: Folder, title: "Files", href: "#" },
-  { icon: Notebook, title: "Notes", href: "#" },
+  { icon: Notebook, title: "Notes", href: "/notes" },
   { icon: Calendar, title: "Planner", href: "#" },
   { icon: Settings, title: "Settings", href: "#" },
 ];

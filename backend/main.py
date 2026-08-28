@@ -8,6 +8,7 @@ from routes.chats import router as chats_router
 from routes.files import router as files_router
 from routes.memory import router as memory_router
 from routes.auth import router as auth_router
+from routes.notes import router as notes_router
 
 app = FastAPI()
 # Create all database tables
@@ -26,6 +27,7 @@ app.include_router(chats_router, prefix="/chats")
 app.include_router(files_router)
 app.include_router(memory_router)
 app.include_router(auth_router)
+app.include_router(notes_router)
 
 
 @app.get("/")
