@@ -9,6 +9,7 @@ import {
   uploadFile,
   getFiles,
   deleteFile,
+  readFile,
 } from "../../services/api";
 
 
@@ -26,6 +27,33 @@ export default function FilesPage() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedFile, setSelectedFile] =
+    useState<UploadedFile | null>(null);
+
+  const [fileContent, setFileContent] =
+    useState("");
+
+  const [readingFile, setReadingFile] =
+    useState(false);
+  
+  async function handlePreview(file: UploadedFile) {
+    try {
+      setError("");
+      setReadingFile(true);
+      setSelectedFile(file);
+      setFileContent("");
+
+      const result = await readFile(file.filename);
+
+      setFileContent(result.text);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to read file.");
+      setSelectedFile(null);
+    } finally {
+      setReadingFile(false);
+    }
+  }  
 
   async function handleDelete(fileId: number) {
     try {
@@ -334,9 +362,12 @@ export default function FilesPage() {
 
                         <div>
 
-                         <p className="font-medium text-white">
+                         <button
+                           onClick={() => handlePreview(file)}
+                           className="font-medium text-white text-left hover:text-cyan-400 transition"
+                          >
                            {file.filename}
-                         </p>
+                          </button>
 
                          <p className="mt-1 text-sm text-zinc-500">
                            Available to Nexus
@@ -389,6 +420,126 @@ export default function FilesPage() {
                 </div>
 
               )}
+              {/* ==========================
+                  File Preview
+              ========================== */}
+
+              {selectedFile && (
+
+               <div className="
+                 fixed
+                 inset-0
+                 z-50
+                 flex
+                 items-center
+                 justify-center
+                 bg-black/70
+                 backdrop-blur-sm
+                 p-6
+               ">
+
+                 <div className="
+                   w-full
+                   max-w-4xl
+                   max-h-[85vh]
+                   overflow-hidden
+                   rounded-3xl
+                   border
+                   border-white/10
+                   bg-[#111118]
+                   shadow-2xl
+                 ">
+
+                   {/* Preview Header */}
+
+                   <div className="
+                     flex
+                     items-center
+                     justify-between
+                     border-b
+                     border-white/10
+                     px-6
+                     py-5
+                   ">
+
+                     <div>
+
+                       <p className="text-sm uppercase tracking-[0.2em] text-cyan-400">
+                         FILE PREVIEW
+                       </p>
+
+                       <h2 className="mt-1 text-xl font-semibold text-white">
+                         {selectedFile.filename}
+                       </h2>
+
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setFileContent("");
+                      }}
+                      className="
+                        rounded-xl
+                        bg-white/10
+                        px-4
+                        py-2
+                        text-zinc-300
+                        transition
+                        hover:bg-white/20
+                        hover:text-white
+                      "
+                    >
+                     Close
+                    </button>
+
+                  </div>
+
+
+                  {/* File Content */}
+
+                  <div className="
+                    max-h-[70vh]
+                    overflow-y-auto
+                    p-6
+                  ">
+
+                    {readingFile ? (
+
+                      <div className="py-20 text-center">
+
+                       <div className="text-4xl">
+                         ⏳
+                       </div>
+
+                       <p className="mt-4 text-zinc-400">
+                         Reading file...
+                       </p>
+
+                      </div>
+
+                    ) : (
+
+                      <pre className="
+                        whitespace-pre-wrap
+                        break-words
+                        font-sans
+                        text-sm
+                        leading-7
+                        text-zinc-300
+                      ">
+                       {fileContent || "No readable text found in this file."}
+                      </pre>
+
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            )}
 
           </div>
 

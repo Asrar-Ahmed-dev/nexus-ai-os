@@ -152,3 +152,9 @@ export async function deleteFile(file_id: number) {
     method: "DELETE",
   });
 }
+
+export async function readFile(filename: string) {
+  return apiFetch(
+    `/files/read/${encodeURIComponent(filename)}`
+  );
+}
