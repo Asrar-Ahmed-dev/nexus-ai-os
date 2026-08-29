@@ -1,38 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { uploadFile } from "../../services/api";
 
 type Props = {
   onSend: (message: string, filename?: string) => void;
   onStop: () => void;
   thinking: boolean;
-  initialMessage?: string;
 };
 
 export default function PromptBox({
   onSend,
   onStop,
   thinking,
-  initialMessage,
 }: Props) {
   const [message, setMessage] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  useEffect(() => {
-    if (initialMessage) {
-      setMessage(initialMessage);
-    }
-  }, [initialMessage]);
+  const [uploadedFilename, setUploadedFilename] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleSend = () => {
-    if ((!message.trim() && !selectedFile) || thinking) return;
+    if (thinking || uploading) return;
 
-    if (message.trim()) {
-      onSend(message, selectedFile?.name);
-      setMessage("");
-    }
+    // Allow either text OR an uploaded file
+    if (!message.trim() && !uploadedFilename) return;
 
+    onSend(
+      message.trim(),
+      uploadedFilename || undefined
+    );
+
+    setMessage("");
     setSelectedFile(null);
+    setUploadedFilename(null);
+  };
+
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      setSelectedFile(file);
+
+      console.log("Uploading file:", file.name);
+
+      const result = await uploadFile(file);
+
+      console.log("Upload successful:", result);
+
+      // Use the filename returned by the backend
+      setUploadedFilename(result.filename);
+    } catch (err) {
+      console.error("Upload failed:", err);
+
+      alert("Failed to upload file.");
+
+      setSelectedFile(null);
+      setUploadedFilename(null);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -45,25 +76,8 @@ export default function PromptBox({
           id="file-upload"
           className="hidden"
           accept=".pdf,.txt,.docx"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-
-            if (!file) return;
-
-            try {
-              setSelectedFile(file);
-
-              console.log("Uploading file:", file.name);
-
-              const result = await uploadFile(file);
-
-              console.log("Upload successful:", result);
-            } catch (err) {
-              console.error("Upload failed:", err);
-              alert("Failed to upload file.");
-              setSelectedFile(null);
-            }
-          }}
+          disabled={thinking || uploading}
+          onChange={handleFileChange}
         />
 
         <label
@@ -78,15 +92,33 @@ export default function PromptBox({
       {/* Selected File */}
       {selectedFile && (
         <div className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm text-zinc-300">
+
           📄 {selectedFile.name}
+
+          {uploading && (
+            <span className="text-cyan-400">
+              Uploading...
+            </span>
+          )}
+
+          {!uploading && uploadedFilename && (
+            <span className="text-green-400">
+              ✓
+            </span>
+          )}
 
           <button
             type="button"
-            onClick={() => setSelectedFile(null)}
+            onClick={() => {
+              setSelectedFile(null);
+              setUploadedFilename(null);
+            }}
             className="text-red-400 hover:text-red-300"
+            disabled={uploading}
           >
             ✕
           </button>
+
         </div>
       )}
 
@@ -95,7 +127,7 @@ export default function PromptBox({
         className="flex-1 bg-transparent text-white placeholder:text-zinc-500 outline-none"
         placeholder="Ask Nexus anything..."
         value={message}
-        disabled={thinking}
+        disabled={thinking || uploading}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -104,7 +136,7 @@ export default function PromptBox({
         }}
       />
 
-      {/* Send / Stop Button */}
+      {/* Send / Stop */}
       {thinking ? (
         <button
           onClick={onStop}
@@ -115,11 +147,13 @@ export default function PromptBox({
       ) : (
         <button
           onClick={handleSend}
-          className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2 font-medium text-white transition hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/30"
+          disabled={uploading}
+          className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2 font-medium text-white transition hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Send →
         </button>
       )}
+
     </div>
   );
 }

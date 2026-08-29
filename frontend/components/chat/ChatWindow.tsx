@@ -77,15 +77,38 @@ export default function ChatWindow({
     setThinking(false);
   }
 
-  async function handleSend(message: string, filename?:string) {
+  async function handleSend(message: string, filename?: string) {
     console.log("handleSend started");
-    if (!message.trim()) return;
+
+    let effectiveMessage = message.trim();
+
+    if (!effectiveMessage && filename) {
+      if (mode === "analyze") {
+        effectiveMessage =
+          "Analyze the attached file and explain the key insights, important information, and anything I should pay attention to.";
+      } else if (mode === "code") {
+        effectiveMessage =
+          "Analyze the attached code, explain what it does, identify problems, and suggest improvements.";
+      } else if (mode === "research") {
+        effectiveMessage =
+          "Analyze the attached material and provide a detailed explanation of the important findings and information.";
+      } else if (mode === "create") {
+        effectiveMessage =
+          "Use the attached file as context and help me create something useful from it.";
+      } else {
+        effectiveMessage =
+          "Analyze the attached file and explain the important information.";
+      }
+    }
+
+    if (!effectiveMessage) return;
+    
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
     const userMessage: Message = {
       role: "user",
-      content: message,
+      content: effectiveMessage,
     };
 
     const updated = [...messages, userMessage];
@@ -106,7 +129,7 @@ export default function ChatWindow({
       console.log("Calling streamMessage...");
       await streamMessage(
         selectedChat,
-        message,
+        effectiveMessage,
         (chunk) => {
           streamedReply += chunk;
 
@@ -127,9 +150,9 @@ export default function ChatWindow({
       // Rename brand new chats
       if (messages.length === 0) {
         const title =
-          message.length > 40
-            ? message.substring(0, 40) + "..."
-            : message;
+          effectiveMessage.length > 40
+            ? effectiveMessage.substring(0, 40) + "..."
+            : effectiveMessage;
 
         await renameChat(
           selectedChat,

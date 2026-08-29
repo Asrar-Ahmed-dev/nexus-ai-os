@@ -135,7 +135,7 @@ class Memory(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
- # ==========================
+# ==========================
 # Notes
 # ==========================
 
@@ -180,6 +180,49 @@ class Note(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
+    )
+
+    user = relationship(
+        "User"
+    )
+# ==========================
+# Uploaded Files
+# ==========================
+
+class StoredFile(Base):
+    __tablename__ = "stored_files"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+
+    filename = Column(
+        String,
+        nullable=False
+    )
+
+    file_type = Column(
+        String,
+        nullable=False
+    )
+
+    file_path = Column(
+        String,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
     )
 
     user = relationship(

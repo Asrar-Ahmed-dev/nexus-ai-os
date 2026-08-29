@@ -104,7 +104,12 @@ export async function streamMessage(
   }
 }
 
-export async function uploadFile(file: File) {
+export async function uploadFile(file: File): Promise<{
+  id: number;
+  filename: string;
+  file_type: string;
+  message: string;
+}> {
   const token = getToken();
 
   const formData = new FormData();
@@ -130,4 +135,20 @@ export async function uploadFile(file: File) {
   }
 
   return await response.json();
+}
+
+
+export async function getFiles(): Promise<{
+  id: number;
+  filename: string;
+  file_type: string;
+  created_at?: string;
+}[]> {
+  return await apiFetch("/files/");
+}
+
+export async function deleteFile(file_id: number) {
+  return apiFetch(`/files/${file_id}`, {
+    method: "DELETE",
+  });
 }
