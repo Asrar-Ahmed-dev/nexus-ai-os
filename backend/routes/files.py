@@ -130,8 +130,16 @@ async def upload_file(
         file.filename
     )
 
-    file_path = os.path.join(
+    user_upload_dir = os.path.join(
         UPLOAD_DIR,
+        str(current_user.id)
+    )
+    os.makedirs(
+        user_upload_dir,
+        exist_ok=True
+    )
+    file_path = os.path.join(
+        user_upload_dir,
         filename
     )
 
