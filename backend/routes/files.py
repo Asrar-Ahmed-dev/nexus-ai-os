@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi.responses import FileResponse
 import os
 import shutil
 
@@ -180,6 +181,7 @@ async def upload_file(
             "id": stored_file.id,
             "filename": stored_file.filename,
             "file_type": stored_file.file_type,
+            "created_at": stored_file.created_at,
             "message": "File uploaded successfully"
         }
 
@@ -226,7 +228,53 @@ async def get_files(
 
         db.close()
 
+# ==========================
+# Download File
+# ==========================
 
+@router.get("/download/{file_id}")
+async def download_file(
+    file_id: int,
+    current_user=Depends(get_current_user)
+):
+
+    db = SessionLocal()
+
+    try:
+
+        stored_file = (
+            db.query(StoredFile)
+            .filter(
+                StoredFile.id == file_id,
+                StoredFile.user_id == current_user.id
+            )
+            .first()
+        )
+
+        if not stored_file:
+            raise HTTPException(
+                status_code=404,
+                detail="File not found"
+            )
+
+        if not os.path.exists(
+            stored_file.file_path
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Physical file not found"
+            )
+
+        return FileResponse(
+            path=stored_file.file_path,
+            filename=stored_file.filename,
+            media_type="application/octet-stream"
+        )
+
+    finally:
+
+        db.close()
+    
 # ==========================
 # Read File
 # ==========================

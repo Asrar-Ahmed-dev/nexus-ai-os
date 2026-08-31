@@ -104,10 +104,15 @@ export async function streamMessage(
   }
 }
 
+
+//=============//
+// UPLOAD FILE //
+//=============//
 export async function uploadFile(file: File): Promise<{
   id: number;
   filename: string;
   file_type: string;
+  created_at: string,
   message: string;
 }> {
   const token = getToken();
@@ -138,6 +143,10 @@ export async function uploadFile(file: File): Promise<{
 }
 
 
+
+//==========//
+// GET FILE //
+//==========//
 export async function getFiles(): Promise<{
   id: number;
   filename: string;
@@ -147,14 +156,50 @@ export async function getFiles(): Promise<{
   return await apiFetch("/files/");
 }
 
+
+//=============//
+// DELETE FILE //
+//=============//
 export async function deleteFile(file_id: number) {
   return apiFetch(`/files/${file_id}`, {
     method: "DELETE",
   });
 }
 
+
+//===========//
+// READ FILE //
+//===========//
 export async function readFile(filename: string) {
   return apiFetch(
     `/files/read/${encodeURIComponent(filename)}`
   );
+}
+
+
+//===============//
+// DOWNLOAD FILE //
+//===============//
+export async function downloadFile(fileId: number) {
+  const token = getToken();
+
+  const response = await fetch(
+    `${API_URL}/files/download/${fileId}`,
+    {
+      method: "GET",
+      headers: {
+        ...(token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {}),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  return await response.blob();
 }

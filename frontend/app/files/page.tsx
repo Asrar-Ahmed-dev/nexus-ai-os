@@ -10,6 +10,7 @@ import {
   getFiles,
   deleteFile,
   readFile,
+  downloadFile,
 } from "../../services/api";
 
 
@@ -53,7 +54,27 @@ export default function FilesPage() {
     } finally {
       setReadingFile(false);
     }
-  }  
+  }
+
+  async function handleDownload(file: UploadedFile) {
+    try {
+      setError("");
+
+      const blob = await downloadFile(file.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error(err);
+      setError("Failed to download file.");
+    }
+   }    
 
   async function handleDelete(fileId: number) {
     try {
@@ -130,6 +151,7 @@ export default function FilesPage() {
         id: result.id,
         filename: result.filename,
         file_type: result.file_type,
+        created_at: result.created_at,
       };
 
       setFiles((prev) => [
@@ -152,6 +174,15 @@ export default function FilesPage() {
     }
   }
 
+  function formatFileDate(date?: string) {
+    if (!date) return "";
+
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
 
   return (
     <main className="h-screen flex bg-[#0E0E13] text-white">
@@ -370,7 +401,13 @@ export default function FilesPage() {
                           </button>
 
                          <p className="mt-1 text-sm text-zinc-500">
-                           Available to Nexus
+                           {file.file_type.replace(".", "").toUpperCase()}
+                           {file.created_at && (
+                            <>
+                              {" . "}
+                              {formatFileDate(file.created_at)}
+                            </>
+                           )}
                          </p>
 
                         </div>
@@ -394,6 +431,22 @@ export default function FilesPage() {
                       >
                         Uploaded
                       </span>
+
+                      <button
+                        onClick={() => handleDownload(file)}
+                        className="
+                          rounded-lg
+                          bg-cyan-500/10
+                          px-3
+                          py-1
+                          text-sm
+                          text-cyan-400
+                          transitionhover:bg-cyan-500/20
+                          hover:text-cyan-300
+                        "
+                      >
+                        Download
+                      </button>                    
 
                       <button
                         onClick={() => handleDelete(file.id)}
