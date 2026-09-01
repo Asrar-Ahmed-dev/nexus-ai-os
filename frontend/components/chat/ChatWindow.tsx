@@ -35,6 +35,7 @@ export default function ChatWindow({
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [activeFilename, setActiveFilename] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -42,6 +43,8 @@ export default function ChatWindow({
 
   // Load chat whenever selected chat changes
   useEffect(() => {
+    setActiveFilename(null);
+
     async function loadMessages() {
       try {
         const data = await getMessages(selectedChat);
@@ -79,6 +82,10 @@ export default function ChatWindow({
 
   async function handleSend(message: string, filename?: string) {
     console.log("handleSend started");
+    if (filename) {
+      setActiveFilename(filename);
+    }
+    const effectiveFilename = filename || activeFilename;
 
     let effectiveMessage = message.trim();
 
@@ -142,7 +149,7 @@ export default function ChatWindow({
           ]);
         },
         controller.signal,
-        filename
+        effectiveFilename || undefined
       );
       abortControllerRef.current = null
       setThinking(false);

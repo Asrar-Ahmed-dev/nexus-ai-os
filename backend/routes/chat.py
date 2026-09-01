@@ -1,8 +1,7 @@
 import os
 
 from database.database import SessionLocal
-from database.models import ChatMessage, ChatSession
-
+from database.models import ( ChatMessage, ChatSession, StoredFile,)
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -57,6 +56,41 @@ def verify_chat_ownership(
         )
 
     return chat
+
+def get_user_file(
+    filename: str,
+    user_id: int,
+):
+    db = SessionLocal()
+
+    try:
+        stored_file = (
+            db.query(StoredFile)
+            .filter(
+                StoredFile.filename == filename,
+                StoredFile.user_id == user_id,
+            )
+            .first()
+        )
+
+        if stored_file is None:
+            raise HTTPException(
+                status_code=404,
+                detail="File not found",
+            )
+
+        if not os.path.exists(
+            stored_file.file_path
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Physical file not found",
+            )
+
+        return stored_file
+
+    finally:
+        db.close()
 
 
 @router.post("/")
@@ -115,16 +149,16 @@ async def chat(
     file_context = ""
 
     if request.filename:
-        file_path = os.path.join(
-            "uploads",
+        stored_file = get_user_file(
             request.filename,
+            current_user.id,
         )
 
-        if os.path.exists(file_path):
-            file_context = extract_text(
-                file_path,
-                request.filename,
-            )
+        
+        file_context = extract_text(
+            stored_file.file_path,
+            stored_file.filename,
+        )
 
     prompt = f"""
 You are Nexus AI.
@@ -263,17 +297,21 @@ async def stream_chat(
     file_context = ""
 
     if request.filename:
-        file_path = os.path.join(
-            "uploads",
-            request.filename,
-        )
+     
 
-        if os.path.exists(file_path):
-            file_context = extract_text(
-                file_path,
-                request.filename,
-            )
+       stored_file = get_user_file(
+           request.filename,
+           current_user.id,
+       )
 
+      
+
+       file_context = extract_text(
+           stored_file.file_path,
+           stored_file.filename,
+       )
+
+      
     prompt = f"""
 You are Nexus AI.
 
@@ -288,16 +326,26 @@ This is the previous conversation:
 
     if file_context:
         prompt += f"""
-The user has attached a file.
+IMPORTANT: The user has attached a file.
 
 Filename:
 {request.filename}
 
+The following is the text extracted directly from the attached file:
+
+--- BEGIN FILE CONTENT ---
 File contents:
 {file_context}
+--- END FILE CONTENT ---
+FILE ANSWERING RULES:
 
-Use the file contents when answering the user's question.
-If the question is about the file, base your answer on its contents.
+- The attached file is the primary source for questions about the file.
+- Carefully use the actual file content above when answering.
+- Do not give a generic answer when the requested information can be found in the file.
+- Do not guess or invent information that is not present in the file.
+- For names, subjects, marks, grades, SGPA, CGPA, dates, and other specific values, use the exact information found in the file.
+- If the requested information cannot be found in the file, clearly say that it is not present in the file.
+- If the user asks to list information from the file, extract it from the file rather than generating a typical/example list.
 """
 
     prompt += f"""
