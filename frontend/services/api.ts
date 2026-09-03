@@ -5,13 +5,17 @@ const API_URL = "http://127.0.0.1:8000";
 
 export async function sendMessage(
   chat_id: number,
-  message: string
+  message: string,
+  filename?: string,
+  mode?: string | null
 ) {
   return await apiFetch("/chat/", {
     method: "POST",
     body: JSON.stringify({
       chat_id,
       message,
+      filename: filename || null,
+      mode: mode || null,
     }),
   });
 }
@@ -55,7 +59,8 @@ export async function streamMessage(
   message: string,
   onChunk: (chunk: string) => void,
   signal?: AbortSignal,
-  filename?: string
+  filename?: string,
+  mode?: string | null
 ) {
   const token = getToken();
 
@@ -75,6 +80,7 @@ export async function streamMessage(
         chat_id: chatId,
         message,
         filename: filename || null,
+        mode: mode || null,
       }),
       signal,
     }

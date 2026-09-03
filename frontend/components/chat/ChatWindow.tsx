@@ -152,7 +152,8 @@ export default function ChatWindow({
           ]);
         },
         controller.signal,
-        effectiveFilename || undefined
+        effectiveFilename || undefined,
+        mode
       );
       abortControllerRef.current = null
       setThinking(false);
