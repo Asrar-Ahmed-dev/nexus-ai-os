@@ -2,9 +2,27 @@
 
 import { Search } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Topbar() {
   const pathname = usePathname();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const dateTime = currentTime.toLocaleString("en-IN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Kolkata",
+  }) + " IST";
 
   const titles: Record<string, string> = {
    "/": "Dashboard",
@@ -25,7 +43,7 @@ export default function Topbar() {
         </h2>
 
         <p className="text-zinc-500 mt-1">
-          Saturday 01 Aug · 12:13 IST
+          {dateTime}
         </p>
       </div>
 
