@@ -82,10 +82,12 @@ export default function ChatWindow({
 
   async function handleSend(message: string, filename?: string) {
     console.log("handleSend started");
+    console.log("Filename received by ChatWindow:", filename);
     if (filename) {
       setActiveFilename(filename);
     }
     const effectiveFilename = filename || activeFilename;
+    console.log("Effective filename:",effectiveFilename);
 
     let effectiveMessage = message.trim();
 
@@ -134,6 +136,7 @@ export default function ChatWindow({
         },
       ]);
       console.log("Calling streamMessage...");
+      console.log("Sending filename to backend:", effectiveFilename);
       await streamMessage(
         selectedChat,
         effectiveMessage,
