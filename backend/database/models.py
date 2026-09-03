@@ -228,3 +228,51 @@ class StoredFile(Base):
     user = relationship(
         "User"
     )
+# ==========================
+# Planner Tasks
+# ==========================
+
+class Task(Base):
+    __tablename__ = "tasks"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+
+    title = Column(
+        String,
+        nullable=False
+    )
+
+    description = Column(
+        String,
+        default=""
+    )
+
+    due_date = Column(
+        DateTime,
+        nullable=False
+    )
+
+    completed = Column(
+        Integer,
+        default=0
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    user = relationship(
+        "User"
+    )    

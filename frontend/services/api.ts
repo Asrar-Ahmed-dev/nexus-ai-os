@@ -209,3 +209,75 @@ export async function downloadFile(fileId: number) {
 
   return await response.blob();
 }
+//================//
+// PLANNER TASKS  //
+//================//
+
+export type PlannerTask = {
+  id: number;
+  title: string;
+  description: string;
+  due_date: string;
+  completed: number;
+  created_at: string;
+};
+
+
+//================//
+// GET ALL TASKS  //
+//================//
+
+export async function getTasks(): Promise<PlannerTask[]> {
+  return await apiFetch("/planner/tasks");
+}
+
+
+//================//
+// CREATE TASK    //
+//================//
+
+export async function createTask(
+  title: string,
+  description: string,
+  due_date: string
+) {
+  return await apiFetch("/planner/tasks", {
+    method: "POST",
+    body: JSON.stringify({
+      title,
+      description,
+      due_date,
+    }),
+  });
+}
+
+
+//================//
+// UPDATE TASK    //
+//================//
+
+export async function updateTask(
+  taskId: number,
+  data: {
+    title?: string;
+    description?: string;
+    due_date?: string;
+    completed?: boolean;
+  }
+) {
+  return await apiFetch(`/planner/tasks/${taskId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+
+//================//
+// DELETE TASK    //
+//================//
+
+export async function deleteTask(taskId: number) {
+  return await apiFetch(`/planner/tasks/${taskId}`, {
+    method: "DELETE",
+  });
+}

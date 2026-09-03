@@ -17,7 +17,7 @@ const menu = [
   { icon: MessageCircle, title: "Chats", href: "/chats" },
   { icon: Folder, title: "Files", href: "/files" },
   { icon: Notebook, title: "Notes", href: "/notes" },
-  { icon: Calendar, title: "Planner", href: "#" },
+  { icon: Calendar, title: "Planner", href: "/planner" },
   { icon: Settings, title: "Settings", href: "#" },
 ];
 type User = {
