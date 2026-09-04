@@ -1,4 +1,48 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { getTasks, getChats, PlannerTask } from "../../services/api";
+
 export default function StatusPanel() {
+    const [tasks, setTasks] = useState<PlannerTask[]>([]);
+    const [chatCount, setChatCount] = useState(0);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const [taskData, chatData] = await Promise.all([
+          getTasks(),
+          getChats(),
+        ]);
+        setTasks(taskData);
+        setChatCount(chatData.length);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
+
+  const now = new Date();
+
+  const today =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}`;
+
+  const todayTasks = tasks.filter((task) => {
+    const dueDate = new Date(task.due_date);
+
+    const taskDate =
+      `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, "0")}-${String(
+        dueDate.getDate()
+      ).padStart(2, "0")}`;
+
+    return taskDate === today && !task.completed;
+  });
+
   return (
     <aside className="w-[360px] border-l border-white/10 bg-[#0D0D13] p-8">
       <div className="space-y-6">
@@ -35,7 +79,7 @@ export default function StatusPanel() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-2xl border border-white/10 bg-[#171720] p-5">
-            <p className="text-3xl font-bold text-cyan-400">12</p>
+            <p className="text-3xl font-bold text-cyan-400">{chatCount}</p>
 
             <p className="mt-2 text-xs uppercase tracking-wider text-zinc-500">
               Active Chats
@@ -43,7 +87,7 @@ export default function StatusPanel() {
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-[#171720] p-5">
-            <p className="text-3xl font-bold text-purple-400">4</p>
+            <p className="text-3xl font-bold text-purple-400">{todayTasks.length}</p>
 
             <p className="mt-2 text-xs uppercase tracking-wider text-zinc-500">
               Tasks Due
@@ -58,11 +102,44 @@ export default function StatusPanel() {
           </h3>
 
           <div className="space-y-4">
-            <Task colour="bg-purple-400" task="DE Module 3 quiz review" time="10:30" />
 
-            <Task colour="bg-cyan-400" task="Python MQP final pass" time="14:00" />
+            {todayTasks.length === 0 ? (
 
-            <Task colour="bg-yellow-300" task="Numerical Methods Lab" time="16:15" />
+              <p className="text-sm text-zinc-500">
+                No tasks due today.
+              </p>
+
+            ) : (
+
+              todayTasks.slice(0, 4).map((task, index) => {
+
+                const dueDate = new Date(task.due_date);
+
+                const time = dueDate.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                });
+                const colours = [
+                  "bg-purple-400",
+                  "bg-cyan-400",
+                  "bg-yellow-300",
+                  "bg-pink-400",
+                ];
+
+                return (
+                  <Task
+                    key={task.id}
+                    colour={colours[index % colours.length]}
+                    task={task.title}
+                    time={time}
+                  />
+                );
+
+              })
+
+            )}
+
           </div>
         </div>
       </div>
