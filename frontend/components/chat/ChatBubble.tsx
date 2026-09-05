@@ -44,7 +44,7 @@ export default function ChatBubble({
           py-4
           ${
             isUser
-              ? "bg-indigo-600 text-white"
+              ? "bg-blue-500 text-white"
               : "bg-[#1B1B24] text-white border border-white/10"
           }
         `}

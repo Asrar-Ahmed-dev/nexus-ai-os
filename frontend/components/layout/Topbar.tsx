@@ -6,23 +6,27 @@ import { useEffect, useState } from "react";
 
 export default function Topbar() {
   const pathname = usePathname();
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, 60000);
     return () => clearInterval(timer);
   }, []);
-  const dateTime = currentTime.toLocaleString("en-IN", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Asia/Kolkata",
-  }) + " IST";
+  const dateTime = currentTime
+    ? currentTime.toLocaleString("en-IN", {
+        weekday: "long",
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Kolkata",
+      }) + " IST"
+    :"";
+
 
   const titles: Record<string, string> = {
    "/": "Dashboard",

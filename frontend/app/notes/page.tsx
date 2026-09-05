@@ -247,11 +247,10 @@ export default function NotesPage() {
                 <button
                   onClick={createNote}
                   disabled={saving}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-500 py-3 font-medium transition"
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-white transition hover:opacity-90 flex items-center justify-center gap-2"
                 >
                   <Plus size={20} />
-
-                  New Note
+                 New Note
                 </button>
 
                 <div className="mt-4 relative">
@@ -267,7 +266,7 @@ export default function NotesPage() {
                       setSearch(e.target.value)
                     }
                     placeholder="Search notes..."
-                    className="w-full rounded-xl bg-zinc-900 border border-zinc-800 pl-10 pr-4 py-3 outline-none focus:border-purple-500"
+                    className="w-full rounded-xl bg-zinc-900 border border-zinc-800 pl-10 pr-4 py-3 outline-none focus:border-cyan-500"
                   />
 
                 </div>
@@ -308,7 +307,7 @@ export default function NotesPage() {
                       }
                       className={`w-full text-left rounded-xl p-4 transition ${
                         selectedNote?.id === note.id
-                          ? "bg-purple-600/20 border border-purple-500/40"
+                          ? "bg-cyan-500/20 border border-cyan-400/40"
                           : "bg-zinc-900 border border-zinc-800 hover:bg-zinc-800"
                       }`}
                     >
@@ -414,7 +413,7 @@ export default function NotesPage() {
                       <button
                         onClick={saveNote}
                         disabled={saving}
-                        className="flex items-center gap-2 rounded-lg bg-purple-600 hover:bg-purple-500 px-4 py-2 transition disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-white transition hover:opacity-90 disabled:opacity-50"
                       >
 
                         <Save size={18} />

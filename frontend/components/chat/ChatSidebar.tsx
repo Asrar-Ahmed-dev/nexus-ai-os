@@ -75,10 +75,11 @@ export default function ChatSidebar({
         className="
           w-full
           rounded-xl
-          bg-indigo-600
+          bg-blue-500
           py-3
           font-medium
-          hover:bg-indigo-500
+          text-white
+          hover:opacity-90
           transition
         "
       >
@@ -97,7 +98,7 @@ export default function ChatSidebar({
             rounded-xl
             ${
               selectedChat === chat.id
-                ? "bg-indigo-600"
+                ? "bg-blue-500"
                 : "bg-white/10 hover:bg-white/20"
             }
           `}
